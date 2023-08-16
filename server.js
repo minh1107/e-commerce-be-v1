@@ -1,10 +1,15 @@
 const express = require('express')
-require('dotenv')
+const dbConnect = require('./src/config/dbConnect')
+const initRoutes = require('./src/routes')
+require('dotenv').config()
+
 
 const app = express()
 const port = process.env.PORT || 8000
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
+dbConnect()
+initRoutes(app)
 
 app.use('/', (req, res) => {
     res.req('Server running')
