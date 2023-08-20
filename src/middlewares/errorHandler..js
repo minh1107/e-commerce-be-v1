@@ -7,10 +7,10 @@ const notFound = (req, res, next) => {
 
 // Nhảy vào hàm này khi có lỗi vì nó bắt lỗi là err 
 const errHandler = (err, req, res, next) => {
-    const statusCode = res.statusCode == 200 ? 500 : res.statusCode
+    const statusCode = res.statusCode == 200 ? 400 : res.statusCode
     return res.status(statusCode).json({
         status: false,
-        mes: err?.message
+        message: err?.message
     })
 }
 
