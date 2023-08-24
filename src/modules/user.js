@@ -21,6 +21,9 @@ var userSchema = new mongoose.Schema({
         type:String,
         unique: true
     },
+    avatar: {
+        type: String,
+    },
     password:{
         type:String,
         required:true,
@@ -30,8 +33,9 @@ var userSchema = new mongoose.Schema({
         required:true,
     },
     role: {
-        type: String,
-        default: 'user'
+        type: Number,
+        enum: [0, 1],
+        default: 0
     },
     cart: {
         type: Array,

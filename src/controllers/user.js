@@ -105,7 +105,7 @@ const login = asyncHandler( async(req, res) => {
 
 const getCurrent = asyncHandler( async(req, res) => {
     const { _id } = req.user
-    const user = await User.findById(_id).select('-password -refreshToken -role')
+const user = await User.findById(_id).select('-password -refreshToken')
     return res.status(200).json({
         state: user ? true : false,
         data: user ? user : 'not found user'
@@ -115,7 +115,6 @@ const getCurrent = asyncHandler( async(req, res) => {
 const refreshAccessToken = asyncHandler( async(req, res) => {
     // lấy refresh token từ cookie
     const cookie = req.cookies
-    console.log(cookie)
     // Check có refresh token có và hợp lệ hay không
     if(!cookie && !cookie.refreshToken) throw new Error('No refreshtoken in cookies')
     const decodeRefreshtoken = await jwt.verify(cookie.refreshToken, process.env.JWT_SECRET)
@@ -189,11 +188,66 @@ const resetPassword = asyncHandler( async(req, res) => {
 })
 
 const getAllUser = asyncHandler( async(req, res) => {
-    const response  = await User.find()
-    return res.status(200).json({
-        status: response ? true : false ,
-        data: response ? response : ''
-    })
+    const queries = { ...req.query }
+    const excludeFields = ['limit', 'sort', 'page', 'fields']
+    excludeFields.forEach(item => delete queries[item])
+  
+    // Format lại các operators cho đúng cú pháp mongoose
+    let queryString = JSON.stringify(queries)
+    queryString = queryString.replace(/\b(gte|gt|lt|lte)\b/g, matchedElement => `$${matchedElement}`)
+  
+    const formatQueries = JSON.parse(queryString)
+    // Để thằng mongoose db hiểu là sử dụng được cả chữ hoa và chữ thường
+    if(req.query.search) {
+        delete formatQueries.search
+        formatQueries['$or'] = [
+            {firstname: { $regex: req.query.search, $options: 'i' }},
+            {lastname: { $regex: req.query.search, $options: 'i' }},
+            {email: { $regex: req.query.search, $options: 'i' }},
+        ]
+    }
+   
+    let queryCommand = User.find(formatQueries);
+    // Sorting
+    if (req.query.sort) {
+      const sortBy = req.query.sort.replace(",", " ");
+      queryCommand = queryCommand.sort(sortBy)
+    }
+    // Select fields
+    if (req.query.fields) {
+      // Tách string truyền vào ngăn cách nhau bởi dấu phẩy tạo thành array và tiếp tục join thành string ngăn cách nhau bằng dấu ''  
+      const fields = req.query.fields.replace(",", " ")
+      queryCommand = queryCommand.select(fields)
+    }
+
+    // Pagination, limit, page
+    // +2 => 2,
+    // +string => NaN
+    //  18 sản phẩm => page = 2 limit = 2 => start = 3 => skip = (page - 1) * limit = 2
+    const limit = +req.query.limit || process.env.LIMIT_PRODUCT
+    queryCommand.limit(limit)
+    if (req.query.page && req.query.limit) {
+      const page = +req.query.page || 1
+      const limit = +req.query.limit || process.env.LIMIT_PRODUCT
+      const skip = (page - 1) * limit
+      queryCommand.skip(skip).limit(limit)
+    }
+    // Filtering
+    let totalUsers = await User.estimatedDocumentCount()
+    try {
+      const response = await queryCommand.exec();
+      const counts = response.length;
+
+      return res.status(200).json({
+        counts: counts ? counts : '',
+        totalUsers: totalUsers,
+        status: counts ? true : false,
+        users: response ? response : "Cannot get all products"
+      });
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  
 })
 
 const getUser = asyncHandler( async(req, res) => {
@@ -211,7 +265,7 @@ const deleteUser = asyncHandler( async(req, res) => {
     if(!_id) throw new Error('Missing input')
     const user = await User.findByIdAndDelete(_id)
     return res.status(200).json({
-        state: user ? true : false,
+        status: user ? true : false,
         data: user ? 'Delete completed' : "Can't delete"
     })
 })
@@ -222,7 +276,7 @@ const updateUser = asyncHandler( async(req, res) => {
     if(!(_id && Object.keys(req.body).length !== 0)) throw new Error('Missing input')
     const user = await User.findByIdAndUpdate(_id, data, {new: true}).select('-password -role')
     return res.status(200).json({
-        state: user ? true : false,
+        status: user ? true : false,
         data: user ? 'Update completed' : "Can't Update"
     })
 }) 
@@ -233,7 +287,7 @@ const updateByAdminUser = asyncHandler( async(req,res) => {
     if(!(uid && Object.keys(req.body).length !== 0)) throw new Error('Missing input')
     const user = await User.findByIdAndUpdate(uid, data, {new: true}).select('-password -role')
     return res.status(200).json({
-        state: user ? true : false,
+        status: user ? true : false,
         data: user ? 'Update completed' : "Can't Update"
     })
 })

@@ -31,7 +31,6 @@ const createOrder = asyncHandler( async(req, res) => {
 const updateStatus = asyncHandler( async(req, res) => {
     const { oid } = req.params
     const { status } = req.body
-    console.log(oid, status)
     if(!(oid || status)) throw new Error('Không có thông tin đơn hàng để sửa đổi trang thái đơn hàng')
     const response = await Order.findByIdAndUpdate(oid, {status}, {new: true})
     return res.status(200).json({
