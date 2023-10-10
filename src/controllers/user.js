@@ -272,12 +272,14 @@ const deleteUser = asyncHandler( async(req, res) => {
 
 const updateUser = asyncHandler( async(req, res) => {
     const data = req.body
+    console.log(data)
     const { _id } = req.user
     if(!(_id && Object.keys(req.body).length !== 0)) throw new Error('Missing input')
     const user = await User.findByIdAndUpdate(_id, data, {new: true}).select('-password -role')
     return res.status(200).json({
         status: user ? true : false,
-        data: user ? 'Update completed' : "Can't Update"
+        notify: user ? 'Update completed' : "Can't Update",
+        data: user
     })
 }) 
 
