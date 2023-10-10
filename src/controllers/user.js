@@ -105,9 +105,9 @@ const login = asyncHandler( async(req, res) => {
 
 const getCurrent = asyncHandler( async(req, res) => {
     const { _id } = req.user
-const user = await User.findById(_id).select('-password -refreshToken')
+    const user = await User.findById(_id).select('-password -refreshToken')
     return res.status(200).json({
-        state: user ? true : false,
+        status: user ? true : false,
         data: user ? user : 'not found user'
     })
 })
@@ -255,7 +255,7 @@ const getUser = asyncHandler( async(req, res) => {
     if(!_id) throw new Error('Missing input')
     const user = await User.findById(_id).select('-password -refreshToken -role')
     return res.status(200).json({
-        state: user ? true : false,
+        status: user ? true : false,
         data: user ? user : 'not found user'
     })
 })
@@ -272,10 +272,10 @@ const deleteUser = asyncHandler( async(req, res) => {
 
 const updateUser = asyncHandler( async(req, res) => {
     const data = req.body
-    console.log(data)
+    const avatar = req.files.avatar[0].path
     const { _id } = req.user
     if(!(_id && Object.keys(req.body).length !== 0)) throw new Error('Missing input')
-    const user = await User.findByIdAndUpdate(_id, data, {new: true}).select('-password -role')
+    const user = await User.findByIdAndUpdate(_id, {...data, avatar}, {new: true}).select('-password -role')
     return res.status(200).json({
         status: user ? true : false,
         notify: user ? 'Update completed' : "Can't Update",
@@ -294,4 +294,94 @@ const updateByAdminUser = asyncHandler( async(req,res) => {
     })
 })
 
-module.exports = { register, login, getCurrent, refreshAccessToken, logout, forgotPassword, resetPassword,getAllUser, getUser, deleteUser, updateUser, updateByAdminUser, finalRegister }
+const createCart = asyncHandler( async(req, res) => {
+    const { _id } = req.user
+    const { pid, ram, color, internal, quantity, price } = req.body
+    if(!(pid && ram && color && internal && quantity)) throw new Error('Không đủ thông tin đặt hàng')
+    let user = await User.findById(_id)
+    
+    const existingProductIndex = user.cart.findIndex(cart => 
+        cart.product.equals(pid) && 
+        cart.ram == ram &&
+        cart.color == color && 
+        cart.internal == internal
+      )
+    if(existingProductIndex !== -1) {
+        user.cart[existingProductIndex].count += quantity
+    } else {
+        user.cart.push({
+        product: pid,
+        ram,
+        color,
+        internal,
+        count: quantity,
+        price: +price,
+      })
+    }
+    user.cart.forEach((element, index) => {
+        user.cart[index].totalPrice = element.count * element.price
+    });
+    await user.save()
+    await user.populate({
+        path: 'cart.product',
+        select: 'images'
+      })
+
+    res.status(201).json({
+      status: true,
+      data: user,
+    })
+})
+
+const getAllCart = asyncHandler( async(req, res) => {
+    const { _id } = req.user
+    const response = await User.findById(_id).select('cart').populate({
+        path: 'cart.product',
+        select: 'thumb title quantity' 
+      })
+    res.status(200).json({
+      status: response ? true : false,
+      data: response ? response : []
+    })
+  })
+
+const deleteCart = asyncHandler( async(req, res) => {
+    const { pid } = req.params
+    const { _id } = req.user 
+    const user = await User.findById(_id); // Fetch the user
+    user.removeCartItem(pid);
+    await user.save(); 
+    return res.status(200).json({
+        status: user ? true : false,
+        data: user.cart ? user.cart : ''
+    })
+})
+
+const updateWishlist = asyncHandler( async(req, res) => {
+    const { _id } = req.user
+    const { pid } = req.params
+    const user = await User.findById(_id); // Fetch the user
+    user.toggleWishlist(pid);
+    await user.save(); // Save the changes to the user document
+    return res.status(200).json({
+        status: user ? true : false,
+        data: user.wishlist ? user.wishlist : ''
+    })
+})
+
+module.exports = {
+    createCart, 
+    register, 
+    login, 
+    getCurrent, 
+    refreshAccessToken, 
+    logout, 
+    forgotPassword, 
+    resetPassword, 
+    getAllUser,
+     getUser,
+     deleteUser,
+     updateUser,
+     updateByAdminUser,
+     finalRegister,
+    getAllCart, deleteCart, updateWishlist }

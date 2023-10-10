@@ -1,0 +1,1 @@
+const avatarDefault = "https://res.cloudinary.com/dkc3cgreu/image/upload/v1693104833/electronicStore/profile/avatar_cnepq8.png"

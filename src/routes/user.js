@@ -16,7 +16,10 @@ router.get('', [verifyAccessToken, isAdmin ], controller.getUser)
 router.delete('', [verifyAccessToken, isAdmin ], controller.deleteUser)
 router.put('/updatecurrent', verifyAccessToken, uploadCloud.fields([{name: 'avatar', maxCount: 1}]), controller.updateUser)
 router.put('/updatebyadmin/:uid', [verifyAccessToken, isAdmin], controller.updateByAdminUser)
-
+router.put('/cart', [verifyAccessToken], controller.createCart)
+router.get('/allcart', [verifyAccessToken], controller.getAllCart)
+router.put('/updateCart/:pid', [verifyAccessToken], controller.deleteCart)
+router.put('/updateWishList/:pid', [verifyAccessToken], controller.updateWishlist)
 
 module.exports = router
 
