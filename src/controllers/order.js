@@ -8,7 +8,6 @@ const createOrder = asyncHandler( async(req, res) => {
     // Trỏ đến bảng product lấy title và price
     const orderInfo = await User.findById(_id).select('cart').populate('cart.product', 'title price')
     const { coupon } = req.body
-    console.log(coupon) 
     const products = orderInfo?.cart?.map(item => ({
       product: item.product._id,
       count: item.quantity,

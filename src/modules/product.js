@@ -40,13 +40,22 @@ var productSchema = new mongoose.Schema({
     },
     sold: {
       type: Number,
-      required: true
     },
     images: {
       type: Array
     },
     color: {
-      type: String,
+      type: Array,
+    },
+    ram: {
+      type: Array
+    },
+    descriptionDetail: {type: String},
+    warranty: {type: String},
+    delivery: {type: String},
+    payment: {type: String},
+    internal: {
+      type: Array,
     },
     rating: [
       {

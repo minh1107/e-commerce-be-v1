@@ -1,7 +1,7 @@
 const mongoose = require("mongoose"); // Erase if already required
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
-const avatarDefault = require('../resource/resource')
+const {avatarDefault} = require('../resource/resource')
 
 // Declare the Schema of the Mongo model
 var userSchema = new mongoose.Schema(
@@ -128,7 +128,12 @@ userSchema.methods = {
       }
     }
   },
-
+  deleteWishlistItem: function (productId) {
+    const index = this.wishlist.indexOf(productId);
+    if (index !== -1) {
+      this.wishlist.splice(index, 1);
+    } else throw new Error('Không có sản phẩm trong danh sách yêu thích')
+  }
 };
 
 //Export the model

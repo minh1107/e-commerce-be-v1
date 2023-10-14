@@ -1,5 +1,6 @@
 const { generateAccessToken, generateRefreshToken } = require("../middlewares/jwt");
 const User = require("../modules/user");
+const Product = require('../modules/product')
 const asyncHandler = require('express-async-handler')
 const jwt = require('jsonwebtoken');
 const sendMail = require("../utils/sendmail");
@@ -298,14 +299,16 @@ const createCart = asyncHandler( async(req, res) => {
     const { _id } = req.user
     const { pid, ram, color, internal, quantity, price } = req.body
     if(!(pid && ram && color && internal && quantity)) throw new Error('Không đủ thông tin đặt hàng')
+    // Tìm user theo data truyền vào
     let user = await User.findById(_id)
-    
+    // Check xem sản phẩm này đã tồn tại trong giỏ hàng chưa
     const existingProductIndex = user.cart.findIndex(cart => 
         cart.product.equals(pid) && 
         cart.ram == ram &&
         cart.color == color && 
         cart.internal == internal
       )
+    //  Nếu không tồn tại thì công thêm 1 vào số lượng
     if(existingProductIndex !== -1) {
         user.cart[existingProductIndex].count += quantity
     } else {
@@ -321,12 +324,12 @@ const createCart = asyncHandler( async(req, res) => {
     user.cart.forEach((element, index) => {
         user.cart[index].totalPrice = element.count * element.price
     });
+
     await user.save()
     await user.populate({
         path: 'cart.product',
         select: 'images'
       })
-
     res.status(201).json({
       status: true,
       data: user,
@@ -369,6 +372,35 @@ const updateWishlist = asyncHandler( async(req, res) => {
     })
 })
 
+const getWishLists = asyncHandler( async(req, res) => {
+    const { _id } = req.user
+    if( !_id ) throw new Error('Vui lòng đăng nhập')
+    const user = await User.findById(_id)
+    const { wishlist } = user
+    const productList = []
+    for(item of wishlist) {
+        let product = await Product.findById(item)
+        productList.push(product)
+    }
+    return res.status(200).json({
+        status: wishlist ? true : false,
+        data: productList ? productList : null
+    })
+})
+
+const deleteWishList = asyncHandler( async(req, res) => {
+    const { pid } = req.params
+    const { _id } = req.user
+    if(!pid) throw new Error('Không có thông tin sản phẩm')
+    const user = await User.findById(_id)
+    user.deleteWishlistItem(pid)
+    await user.save();
+    return res.status(200).json({
+        status: user ? true : false,
+        data: user ? user.wishlist : null
+    })
+})
+
 module.exports = {
     createCart, 
     register, 
@@ -384,4 +416,6 @@ module.exports = {
      updateUser,
      updateByAdminUser,
      finalRegister,
-    getAllCart, deleteCart, updateWishlist }
+    getAllCart, deleteCart, 
+    // wish list
+    updateWishlist, getWishLists, deleteWishList }

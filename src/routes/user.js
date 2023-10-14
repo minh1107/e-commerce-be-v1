@@ -20,6 +20,8 @@ router.put('/cart', [verifyAccessToken], controller.createCart)
 router.get('/allcart', [verifyAccessToken], controller.getAllCart)
 router.put('/updateCart/:pid', [verifyAccessToken], controller.deleteCart)
 router.put('/updateWishList/:pid', [verifyAccessToken], controller.updateWishlist)
+router.get('/wishlists', [verifyAccessToken], controller.getWishLists)
+router.delete('/wishlist/:pid', [verifyAccessToken], controller.deleteWishList)
 
 module.exports = router
 

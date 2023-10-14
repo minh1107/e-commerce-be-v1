@@ -4,11 +4,18 @@ const slugify = require('slugify')
 
 const createProduct = asyncHandler(async (req, res) => {
   console.log(req.body)
+  const imagesArr = req.files.images
+  const images = []
+  for(i of imagesArr) {
+    images.push(i.path)
+  }
+  const thumb = req.files.thumb[0].path
   if (Object.keys(req.body).length === 0) throw new Error('Missing inputs')
   if (req.body && req.body.title) {
     req.body.slug = slugify(req.body.title, { locale: 'vi' })
   }
-  const newProduct = await Product.create(req.body)
+  const request = {...req.body, images, thumb}
+  const newProduct = await Product.create(request)
   return res.status(200).json({
     status: newProduct ? true : false,
     createProduct: newProduct ? newProduct : "Cannot create new product"
