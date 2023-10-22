@@ -12,7 +12,7 @@ app.use(express.urlencoded({extended: true}))
 app.use(cookie())
 app.use(cors({
     origin: process.env.CLIENT_URL,
-    methods: ['POST', 'PUT', 'GET', 'DELETE'],
+    methods: ['POST', 'PUT', 'GET', 'DELETE', 'PATCH'],
     credentials: true,
 }))
 dbConnect()

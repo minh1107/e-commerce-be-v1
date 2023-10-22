@@ -3,18 +3,19 @@ const asyncHandler = require('express-async-handler')
 const slugify = require('slugify')
 
 const createProduct = asyncHandler(async (req, res) => {
-  console.log(req.body)
   const imagesArr = req.files.images
   const images = []
   for(i of imagesArr) {
     images.push(i.path)
   }
   const thumb = req.files.thumb[0].path
+  console.log(req.body)
   if (Object.keys(req.body).length === 0) throw new Error('Missing inputs')
   if (req.body && req.body.title) {
     req.body.slug = slugify(req.body.title, { locale: 'vi' })
   }
   const request = {...req.body, images, thumb}
+  console.log(request)
   const newProduct = await Product.create(request)
   return res.status(200).json({
     status: newProduct ? true : false,
@@ -110,6 +111,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
 const updateProduct = asyncHandler(async (req, res) => {
   const { pid } = req.params
+  console.log(req.body, pid)
   if (req.body && req.body.title) req.body.slug = slugify(req.body.title, { locale: 'vi' })
   const updateProduct = await Product.findByIdAndUpdate(pid, req.body, { new: true })
   return res.status(200).json({
