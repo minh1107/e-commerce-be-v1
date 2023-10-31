@@ -6,25 +6,41 @@ const Coupon = require('../modules/coupon')
 const createOrder = asyncHandler( async(req, res) => {
     const { _id } = req.user
     const orderInfo = req.body
-    console.log(orderInfo)
+    let isPaid = false
+    let paymentType = 'receive'
+    let paymentId = null
     // Trỏ đến bảng product lấy title và price
     // const orderInfo = await User.findById(_id).select('cart').populate('cart.product', 'title price')
+    if(!orderInfo?.finalCart?.length) {
+      throw new Error('Không có mặt hàng nào được chọn')
+    }
+    if(orderInfo.paymentExpression) {
+      isPaid = true
+      paymentType = 'online',
+      paymentId = orderInfo?.paymentExpression?.id
+    }
     const { coupon } = req.body
-    console.log(orderInfo)
-    const products = orderInfo?.map(item => ({
-      product: item._id,
+    const products = orderInfo?.finalCart?.map(item => ({
+      product: item.id,
       count: item.quantity,
       color: item.color,
       price: item.price,
       ram: item.ram,
-      internal: item.internal
+      internal: item.internal,
+      thumb: item.thumb,
+      title: item.title
     }))
-    let total = orderInfo.reduce((sum, item) => parseInt(item.price) * item.quantity + sum, 0)
+    let total = orderInfo.finalCart.reduce((sum, item) => parseInt(item.price) * item.quantity + sum, 0)
     if(coupon) {
       const { discount } = await Coupon.findById(coupon).select('discount')
       total -= Math.round(total*(discount/100))
     }
-    const rs = await Order.create({products, total, orderBy: _id, coupon})
+    const rs = await Order.create({products, total, orderBy: _id, coupon, receiver: orderInfo.receiver, 
+      address: orderInfo.address, mobile: orderInfo.mobile, isPaid: isPaid, paymentType: paymentType, paymentId: paymentId})
+    const user = await User.findById(_id)
+    user.addToHistoryShopping({products, orderId: rs._id})
+    await user.save()
+
     if(orderInfo) 
     res.status(200).json({
       status: orderInfo ? true : false,
@@ -35,9 +51,9 @@ const createOrder = asyncHandler( async(req, res) => {
 
 const updateStatus = asyncHandler( async(req, res) => {
     const { oid } = req.params
-    const { status } = req.body
+    const { status, isPaid } = req.body
     if(!(oid || status)) throw new Error('Không có thông tin đơn hàng để sửa đổi trang thái đơn hàng')
-    const response = await Order.findByIdAndUpdate(oid, {status}, {new: true})
+    const response = await Order.findByIdAndUpdate(oid, {status, isPaid}, {new: true})
     return res.status(200).json({
       status: response ? true : false,
       statusOrder: status,
@@ -67,7 +83,6 @@ const getOrderList = asyncHandler( async(req, res) => {
   const queries = { ...req.query }
   const excludeFields = ['limit', 'sort', 'page', 'fields']
   excludeFields.forEach(item => delete queries[item])
-
   // Format lại các operators cho đúng cú pháp mongoose
   let queryString = JSON.stringify(queries)
   queryString = queryString.replace(/\b(gte|gt|lt|lte)\b/g, matchedElement => `$${matchedElement}`)
@@ -111,6 +126,7 @@ const getOrderList = asyncHandler( async(req, res) => {
     const skip = (page - 1) * limit
     queryCommand.skip(skip).limit(limit)
   }
+  queryCommand.find({ $text: { $search: `${req.query["statusEnum"]}` }})
   // Filtering
   let totalOrder = await Order.estimatedDocumentCount()
   try {
@@ -121,7 +137,8 @@ const getOrderList = asyncHandler( async(req, res) => {
       counts: counts ? counts : '',
       totalOrder: totalOrder,
       status: counts ? true : false,
-      order: response ? response : "Cannot get all order"
+      order: response ? response : "Cannot get all order",
+      enumStatus:  ["Canceled", 'Processing','Shipping', 'Succeeded'] 
     });
   } catch (err) {
     throw new Error(err.message);
@@ -130,7 +147,6 @@ const getOrderList = asyncHandler( async(req, res) => {
 
 const deleteOrder = asyncHandler( async(req, res) => {
   const { oid } = req.params
-  console.log( req.params )
   if(!oid) {
     throw new Error('No data')
   }
@@ -141,4 +157,23 @@ const deleteOrder = asyncHandler( async(req, res) => {
   })
 })
 
-module.exports = { createOrder, updateStatus, getStatus, getAllStatus, getOrderList, deleteOrder }
+const getCurrentOrder = asyncHandler( async(req, res) => {
+  const { _id } = req.user
+  const response = await Order.find({orderBy: _id, isReceive: false})
+  res.status(200).json({
+    status: response ? true : false, 
+    data: response ? response : 'Không có data'
+  })
+})
+
+const checkReceive = asyncHandler( async(req, res) => {
+  const {oid} = req.params
+  if(!oid) throw new Error('Không có sản phảm')
+  const response = await Order.findByIdAndUpdate(oid, {isReceive: true})
+  res.status(200).json({
+    status: response ? true : false, 
+    data: response ? response : 'Không có data'
+  })
+})
+
+module.exports = { createOrder, updateStatus, getStatus, getAllStatus, getOrderList, deleteOrder, getCurrentOrder, checkReceive }

@@ -53,6 +53,26 @@ var userSchema = new mongoose.Schema(
         }
       },
     ],
+    shoppingHistory: [
+      {
+        product: { type: mongoose.Types.ObjectId, ref: "Product" },
+        status: {
+          type: String,
+          default: "Processing",
+          enum: ["Canceled", 'Processing','Shipping', 'Succeeded']  
+        },
+        count: Number,
+        color: String,
+        price: Number,
+        ram: String,
+        internal: String,
+        title: String,
+        thumb: String,
+        createdAt: Date,
+        orderId: {type: mongoose.Types.ObjectId, ref: 'Order'}
+      }
+    ]
+    ,
     address: [{ type: mongoose.Types.ObjectId, ref: "Address" }],
     wishlist: [{ type: mongoose.Types.ObjectId, ref: "Product" }],
     isBlocked: {
@@ -124,6 +144,13 @@ userSchema.methods = {
       }
     }
   },
+  addToHistoryShopping: function ({products, orderId}) {
+    if(products) {
+      products?.forEach(item => {
+        this.shoppingHistory.push({...item, createdAt: new Date(), orderId})
+      })
+    }
+  },
   deleteWishlistItem: function (productId) {
     const index = this.wishlist.indexOf(productId);
     if (index !== -1) {
@@ -131,6 +158,7 @@ userSchema.methods = {
     } else throw new Error('Không có sản phẩm trong danh sách yêu thích')
   }
 };
+
 
 //Export the model
 module.exports = mongoose.model("User", userSchema);

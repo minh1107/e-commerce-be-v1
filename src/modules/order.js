@@ -15,7 +15,8 @@ var orderSchema = new mongoose.Schema({
     status:{
         type:String,
         default: 'Processing',
-        enum: ["Canceled", 'Processing', 'Succeeded'] 
+        enum: ["Canceled", 'Processing','Shipping', 'Succeeded'] ,
+        text: true
     },
     total:{
       type: Number
@@ -28,6 +29,37 @@ var orderSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User'
     },
+    address: {
+      type: String,
+      required: true
+    },
+    receiver: {
+      type: String,
+      required: true
+    },
+    mobile: {
+      type: String,
+      required: true
+    },
+    isPaid: {
+      type: Boolean,
+      default: false,
+      required: true
+    },
+    paymentType: {
+      type: String,
+      default: 'receive',
+      enum: ['receive', 'online'] 
+    },
+    paymentId: {
+      type: String,
+    },
+    isReceive: {
+      type: Boolean,
+      default: false
+    }
+},  {
+  timestamps: true,
 });
 
 //Export the model

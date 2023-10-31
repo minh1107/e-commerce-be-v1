@@ -6,6 +6,26 @@ const jwt = require('jsonwebtoken');
 const sendMail = require("../utils/sendmail");
 const crypto = require('crypto')
 const makeToken = require('uniqid')
+const moment = require('moment')
+
+const pipeline = [
+    {
+      $unwind: '$shoppingHistory' // Unwind the array
+    },
+    {
+      $group: {
+        _id: {
+          year: { $year: '$shoppingHistory.createdAt' },
+          month: { $month: '$shoppingHistory.createdAt' }
+        },
+        total: { $sum: '$shoppingHistory.price' },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { '_id.year': 1, '_id.month': 1 } // Optionally, sort the results
+    }
+  ];
 
 // Đăng ký tài khoản
 // const register = asyncHandler( async(req, res) => {
@@ -401,6 +421,96 @@ const deleteWishList = asyncHandler( async(req, res) => {
     })
 })
 
+const getListShoppingHistory = asyncHandler(async(req, res) => {
+    const { _id } = req.user
+    const response = await User.findById(_id).select('shoppingHistory')
+    return res.status(200).json({
+        status: response ? true : false,
+        data: response ? response : null
+    })
+})
+
+const updateCartHistory = asyncHandler( async(req, res) => {
+    const { oid, status, uid} = req.body
+    if(!oid || !status) {
+        throw new Error('Không đủ thông tin!')
+    }
+    const user = await User.findById(uid)
+    const historyItemIndex= []
+    user.shoppingHistory.forEach(
+        (item, index) => {
+            if(item?.orderId?.toString() === oid) historyItemIndex.push(index)
+        }
+    );
+
+    if (historyItemIndex.length < 1) {
+        throw new Error('Không tồn tại sản order')
+    }
+    Array(historyItemIndex.length).fill().forEach((item, index) => {
+        user.shoppingHistory[historyItemIndex[index]].status = status
+    })
+
+    await user.save();
+
+    return res.status(200).json({
+        status: user.shoppingHistory ? true : false,
+        data: user.shoppingHistory ? user.shoppingHistory : null
+    })
+})
+
+const monthlyRevenue = asyncHandler( async(req, res) => {
+    const targetMonth = 9
+    const targetYear = 2023
+    const allUser = await User.find({
+        'shoppingHistory.createdAt': {
+              $gte: new Date(targetYear, targetMonth, 1),
+              $lt: new Date(targetYear, targetMonth+1, 1)
+        }
+    }).select('shoppingHistory firstname')
+    let monthlyRevenueTotal = 0
+    allUser.forEach(item => {
+        item.shoppingHistory.forEach(el => {
+            if(el.status === 'Succeeded') {
+                monthlyRevenueTotal+=el.price*el.count
+            }
+        })
+    })
+    
+    const groupedData = {};
+    const dataUser = []
+    allUser.forEach(el => {
+        let monthlyRevenueTotalPerson = 0
+        el.shoppingHistory.forEach(item => {
+            let date = new Date(item.createdAt);
+            let monthYear = ''
+            if(isNaN(date)) {
+                date = new Date()
+                date.setMonth(date.getMonth());
+                monthYear = `${date.getMonth()}-${date.getFullYear()}`;
+            } else {
+                monthYear = `${date.getMonth() + 1}-${date.getFullYear()}`;
+            }
+            if (!groupedData[monthYear]) {
+                groupedData[monthYear] = [];
+            }
+            date = moment(date).format('DD:MM:yyyy')
+
+            if(item.status === 'Succeeded') {
+                monthlyRevenueTotalPerson += item.price * item.count
+                groupedData[monthYear].push({date, price: item.price, title: item.title, status: item.status, quantity: item.count});
+            }
+        })
+        dataUser.push({name: el.firstname, monthlyRevenueTotalPerson})
+    });
+
+    return res.status(200).json({
+        totalMoney: monthlyRevenueTotal,
+        groupedData: groupedData,
+        allUser,
+        dataUser
+    })
+})
+
 module.exports = {
     createCart, 
     register, 
@@ -418,4 +528,4 @@ module.exports = {
      finalRegister,
     getAllCart, deleteCart, 
     // wish list
-    updateWishlist, getWishLists, deleteWishList }
+    updateWishlist, getWishLists, deleteWishList , getListShoppingHistory, updateCartHistory ,monthlyRevenue}

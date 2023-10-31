@@ -22,6 +22,9 @@ router.put('/updateCart/:pid', [verifyAccessToken], controller.deleteCart)
 router.put('/updateWishList/:pid', [verifyAccessToken], controller.updateWishlist)
 router.get('/wishlists', [verifyAccessToken], controller.getWishLists)
 router.delete('/wishlist/:pid', [verifyAccessToken], controller.deleteWishList)
+router.get('/getListShoppingHistory', [verifyAccessToken], controller.getListShoppingHistory)
+router.put('/updateStatusHistory', [verifyAccessToken, isAdmin], controller.updateCartHistory) 
+router.get('/monthlyRevenue', [verifyAccessToken, isAdmin], controller.monthlyRevenue)
 
 module.exports = router
 
