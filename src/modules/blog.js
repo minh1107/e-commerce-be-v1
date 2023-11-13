@@ -10,6 +10,10 @@ var blogSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    content: {
+      type: String,
+      require: true
+    },
     category: {
       type: String,
       required: true,

@@ -67,7 +67,7 @@ const register = asyncHandler( async(req, res) => {
     const html = `Xin vui lòng click vào đây để xác thực email đăng ký \
     <a href=${process.env.SERVER_URL}/api/v1/user/finalregister/${token}>Nhấn vào đây</a>`
     const rs = await sendMail({email, html, subject: 'Xác nhận mail'})
-    return res.status(200).json({
+return res.status(200).json({
         status: true,
         message: 'Please check your email registered!'
     })
@@ -459,14 +459,9 @@ const updateCartHistory = asyncHandler( async(req, res) => {
 })
 
 const monthlyRevenue = asyncHandler( async(req, res) => {
-    const targetMonth = 9
     const targetYear = 2023
-    const allUser = await User.find({
-        'shoppingHistory.createdAt': {
-              $gte: new Date(targetYear, targetMonth, 1),
-              $lt: new Date(targetYear, targetMonth+1, 1)
-        }
-    }).select('shoppingHistory firstname')
+    const allUser = await User.find().select('shoppingHistory firstname')
+
     let monthlyRevenueTotal = 0
     allUser.forEach(item => {
         item.shoppingHistory.forEach(el => {
@@ -497,7 +492,7 @@ const monthlyRevenue = asyncHandler( async(req, res) => {
 
             if(item.status === 'Succeeded') {
                 monthlyRevenueTotalPerson += item.price * item.count
-                groupedData[monthYear].push({date, price: item.price, title: item.title, status: item.status, quantity: item.count});
+                groupedData[monthYear].push({date, price: item.price, title: item.title, status: item.status, quantity: item.count, customer: el.firstname});
             }
         })
         dataUser.push({name: el.firstname, monthlyRevenueTotalPerson})

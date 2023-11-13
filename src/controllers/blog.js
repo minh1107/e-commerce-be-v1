@@ -2,9 +2,9 @@ const Blog = require('../modules/blog')
 const asyncHandler = require('express-async-handler')
 
 const createBlog = asyncHandler(async (req, res) => {
-  const response = await Blog.create(req.body)
-  const { title, description, category} =  req.body
-  if(!(title || description || category)) throw new Error('Blog missing')
+  const { title, description, category, content} =  req.body
+  if(!(title || description || category, content)) throw new Error('Blog missing')
+  const response = await Blog.create({title, description, content: content.description, category})
   return res.status(200).json({
     success: response ? true : false,
     createdBlog: response ? response : "Can't create blog"

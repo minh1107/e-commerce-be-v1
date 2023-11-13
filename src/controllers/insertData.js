@@ -5,7 +5,7 @@ const slugify = require('slugify')
 const ProductCategory = require('../modules/productCategory')
 const cateProduct = require('../data/cate_brand')
 
-const fn = async(product) => {
+const productItem = async(product) => {
     await Product.create({
         title: product?.name,
         slug: slugify(product?.name) + Math.round(Math.random() * 1000) + " ",
@@ -31,7 +31,7 @@ const fn = async(product) => {
 
 const insertProduct = asyncHandler(async (req, res) => {
     const promise = [] 
-    for (let product of data ) promise.push(fn(product))
+    for (let product of data ) promise.push(productItem(product))
     await Promise.all(promise)
     return res.json('done')
     //   const newProduct = await Product.create(req.body)
@@ -42,7 +42,7 @@ const insertProduct = asyncHandler(async (req, res) => {
 //   })
 })
 
-const fn2 = async(cateProduct) => {
+const categoryItem = async(cateProduct) => {
     await ProductCategory.create({
         title: cateProduct?.cate,
         brand: cateProduct?.brand,
@@ -53,7 +53,7 @@ const fn2 = async(cateProduct) => {
 
 const insertCategoryProduct = asyncHandler(async (req, res) => {
     const promise = []
-    for (let product of cateProduct ) promise.push(fn2(product))
+    for (let product of cateProduct ) promise.push(categoryItem(product))
     await Promise.all(promise)
     return res.json('done')
 })
