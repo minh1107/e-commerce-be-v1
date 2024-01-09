@@ -88,8 +88,9 @@ const getAllProducts = asyncHandler(async (req, res) => {
   let totalProducts = await Product.estimatedDocumentCount()
   if(queries?.category) {
     const totalProductsQuery = { category: { '$regex': queries.category, '$options': 'i' } }
-    totalProducts = await Product.find(totalProductsQuery);
+    totalProducts = (await Product.find(totalProductsQuery)).length
   }
+  console.log(totalProducts)
   try {
     const response = await queryCommand.exec();
     const counts = response.length;

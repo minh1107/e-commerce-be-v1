@@ -8,25 +8,6 @@ const crypto = require('crypto')
 const makeToken = require('uniqid')
 const moment = require('moment')
 
-const pipeline = [
-    {
-      $unwind: '$shoppingHistory' // Unwind the array
-    },
-    {
-      $group: {
-        _id: {
-          year: { $year: '$shoppingHistory.createdAt' },
-          month: { $month: '$shoppingHistory.createdAt' }
-        },
-        total: { $sum: '$shoppingHistory.price' },
-        count: { $sum: 1 }
-      }
-    },
-    {
-      $sort: { '_id.year': 1, '_id.month': 1 } // Optionally, sort the results
-    }
-  ];
-
 // Đăng ký tài khoản
 // const register = asyncHandler( async(req, res) => {
 //     // Lấy thông tin người dùng từ body request
@@ -67,11 +48,10 @@ const register = asyncHandler( async(req, res) => {
     const html = `Xin vui lòng click vào đây để xác thực email đăng ký \
     <a href=${process.env.SERVER_URL}/api/v1/user/finalregister/${token}>Nhấn vào đây</a>`
     const rs = await sendMail({email, html, subject: 'Xác nhận mail'})
-return res.status(200).json({
+    return res.status(200).json({
         status: true,
         message: 'Please check your email registered!'
     })
-
 })
 
 const finalRegister = asyncHandler( async(req, res) => {
@@ -461,6 +441,7 @@ const updateCartHistory = asyncHandler( async(req, res) => {
 const monthlyRevenue = asyncHandler( async(req, res) => {
     const targetYear = 2023
     const allUser = await User.find().select('shoppingHistory firstname')
+    console.log(allUser[0].shoppingHistory[0])
 
     let monthlyRevenueTotal = 0
     allUser.forEach(item => {
