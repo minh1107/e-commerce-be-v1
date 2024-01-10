@@ -3,7 +3,6 @@ const dbConnect = require('./src/config/dbConnect')
 const initRoutes = require('./src/routes')
 const cookie = require('cookie-parser')
 const cors = require('cors')
-const { createProxyMiddleware } = require('http-proxy-middleware')
 require('dotenv').config()
 
 const app = express()
@@ -16,12 +15,6 @@ app.use(cors({
     methods: ['POST', 'PUT', 'GET', 'DELETE', 'PATCH'],
     credentials: true,
 }))
-app.use(
-    createProxyMiddleware({
-      target: process.env.CLIENT_URL,
-      changeOrigin: true,
-    })
-  );
 dbConnect()
 initRoutes(app)
 
