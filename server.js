@@ -26,7 +26,7 @@ app.use(cookie());
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "https://e-commerce-fe-v1.vercel.app",
+    origin: "*",
     methods: ["POST", "PUT", "GET", "DELETE", "PATCH"],
     credentials: true,
     headers: ["Content-Type"],
