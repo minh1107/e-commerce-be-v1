@@ -11,10 +11,14 @@ app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(cookie())
 app.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL || "https://e-commerce-fe-v1.vercel.app/",
     methods: ['POST', 'PUT', 'GET', 'DELETE', 'PATCH'],
     credentials: true,
+    allowedHeaders: {
+
+    }
 }))
+
 
 dbConnect()
 initRoutes(app)
