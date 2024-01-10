@@ -10,15 +10,18 @@ const port = process.env.PORT || 8000
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(cookie())
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'https://e-commerce-fe-v1.vercel.app');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+  });
+  
 app.use(cors({
-    origin: process.env.CLIENT_URL || "https://e-commerce-fe-v1.vercel.app/",
+    origin: process.env.CLIENT_URL || "https://e-commerce-fe-v1.vercel.app",
     methods: ['POST', 'PUT', 'GET', 'DELETE', 'PATCH'],
     credentials: true,
-    allowedHeaders: {
-
-    }
 }))
-
 
 dbConnect()
 initRoutes(app)
