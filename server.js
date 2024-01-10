@@ -35,7 +35,7 @@ app.use(
 app.options('*', cors())
 dbConnect();
 initRoutes(app);
-
+console.log(process.env.CLIENT_URL)
 app.use("/", (req, res) => {
   res.req("Server running");
 });
