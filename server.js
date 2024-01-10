@@ -15,11 +15,7 @@ app.use(cors({
     methods: ['POST', 'PUT', 'GET', 'DELETE', 'PATCH'],
     credentials: true,
 }))
-app.use(express.static(__dirname)); //here is important thing - no static directory, because all static :)
 
-app.get("/*", function(req, res) {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
 dbConnect()
 initRoutes(app)
 
