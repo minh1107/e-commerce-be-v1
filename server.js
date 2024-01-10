@@ -29,13 +29,11 @@ app.use(
     origin: "*",
     methods: ["POST", "PUT", "GET", "DELETE", "PATCH"],
     credentials: true,
-    headers: ["Content-Type"],
   })
 );
-app.options('*', cors())
 dbConnect();
 initRoutes(app);
-console.log(process.env.CLIENT_URL)
+console.log(process.env.CLIENT_URL);
 app.use("/", (req, res) => {
   res.req("Server running");
 });
